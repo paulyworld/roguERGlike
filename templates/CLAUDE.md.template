@@ -1,0 +1,41 @@
+# CLAUDE.md — {{REPO_NAME}}
+
+You're working in `{{REPO_NAME}}`, one of four repos in the roguERGlike project.
+
+## Read first
+
+1. `HANDOFF.md` (this directory) — current state of this repo
+2. `../../INSTRUCTIONS.md` (in the umbrella) — canonical project-wide conventions
+3. The umbrella's `HANDOFF.md` if your work touches multiple repos
+
+## This repo's role
+
+{{REPO_PURPOSE}}
+
+**Visibility:** {{VISIBILITY}}
+**License:** {{LICENSE}}
+
+## In scope
+
+{{IN_SCOPE}}
+
+## Out of scope
+
+{{OUT_OF_SCOPE}}
+
+Anything that doesn't fit "in scope" probably belongs in a different repo. When in doubt, ask before adding it here.
+
+## House conventions
+
+- Follow the umbrella `INSTRUCTIONS.md` for sessions, branches, commits, versioning
+- Branch off `develop`, never push to `main` or `develop` directly
+- Sign commits (`git commit -S`)
+- {{REPO_SPECIFIC_NOTES}}
+
+## Tech-specific notes
+
+{{TECH_NOTES}}
+
+## Common tasks
+
+{{COMMON_TASKS}}

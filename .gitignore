@@ -1,0 +1,21 @@
+# The four code repos live here as siblings, not as part of this repo.
+repos/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Editor / IDE
+.vscode/
+.idea/
+*.swp
+
+# Logs
+*.log
+
+# Personal ride data (never commit anywhere)
+*.fit
+*.tcx
+*.gpx
+sessions/
+rides/

@@ -1,0 +1,33 @@
+# HANDOFF — {{REPO_NAME}}
+
+> Current state of this repo. Updated at the end of every session that touches it. Read first.
+
+**Last updated:** YYYY-MM-DD
+**Last session log:** `../../docs/sessions/YYYY-MM-DD-<slug>.md` (in umbrella)
+**Current branch:** (active feature branch, or "none — on develop")
+**Current focus:** one sentence
+
+## Where we are
+
+(Two or three sentences. What's the state of the codebase, what works, what doesn't yet, what was the last meaningful change.)
+
+## What's next (immediate)
+
+(Ordered list of the next 1–3 concrete actions. Should be small enough that a new session can start with the top item without further planning.)
+
+1.
+2.
+3.
+
+## Open threads
+
+- (Bullet points of deferred items, unresolved questions, or known issues introduced)
+- (Reference specific session logs by filename if context is non-obvious)
+
+## Notes for next session
+
+(Anything important to load into context, gotchas to remember, tools that need to be running, etc.)
+
+## Entry point for next session
+
+> "(One-sentence directive — what to do first.)"

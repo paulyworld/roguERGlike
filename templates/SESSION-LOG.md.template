@@ -1,0 +1,38 @@
+# Session: YYYY-MM-DD — <one-line title>
+
+**Repo(s):** (umbrella | sidecar | engine | game | server | mixed)
+**Interface:** (Claude chat | Claude Code | Cowork | mixed)
+**Branch(es):** (branch name(s) worked on)
+**Duration:** (approximate)
+
+## Context loaded
+
+- (What was read at session start: HANDOFF, design docs, prior session logs)
+- (Anything the human explained that wasn't in the docs)
+
+## Decisions made
+
+- (Explicit decisions, with rationale if non-obvious)
+- (Anything that changes design direction goes here AND gets reflected in the relevant design doc — note which docs were updated)
+
+## Work done
+
+- (Files touched / created — short bullet list)
+- (Features completed)
+- (Tests added)
+- (Commits: short list with conventional-commit messages)
+
+## Open threads
+
+- (Things deferred to next session)
+- (Questions raised but not answered)
+- (Known issues introduced)
+- (Anything in IDEAS.md that came up but didn't get acted on)
+
+## Next session entry point
+
+> "(One sentence — what to do first next time. Should be specific enough that the next session can start without rebuilding context.)"
+
+## Loose notes
+
+(Anything else worth capturing — observations, things learned, debugging dead-ends, links that helped. Not for sharing, not for design docs, just for memory.)
