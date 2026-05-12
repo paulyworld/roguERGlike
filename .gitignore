@@ -9,13 +9,15 @@ Thumbs.db
 .vscode/
 .idea/
 *.swp
+.claude/
 
 # Logs
 *.log
 
-# Personal ride data (never commit anywhere)
+# Personal ride data (never commit anywhere). Anchored to repo root so it
+# doesn't shadow docs/sessions/, which is the session-log archive.
 *.fit
 *.tcx
 *.gpx
-sessions/
-rides/
+/sessions/
+/rides/
