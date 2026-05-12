@@ -40,12 +40,12 @@ After bootstrap, the realistic first work session is **Phase 1: sidecar mock mod
 
 | Repo | State | Branch | Notes |
 |---|---|---|---|
-| umbrella | not yet `git init` | n/a | this repo, contains conventions |
-| sidecar  | not yet `git init` | n/a | skeleton files ready |
-| engine   | not yet `git init` | n/a | skeleton files ready |
-| game     | not yet `git init` | n/a | skeleton files ready |
-| server   | not yet `git init` | n/a | placeholder only, defer |
+| umbrella | bootstrapped, pushed | develop | live at github.com/paulyworld/roguERGlike |
+| sidecar  | skeleton only, not yet `git init` | n/a | files in repos/sidecar/, ready to bootstrap next session |
+| engine   | skeleton only, not yet `git init` | n/a | files in repos/engine/, ready to bootstrap next session |
+| game     | skeleton only, not yet `git init` | n/a | files in repos/game/, ready to bootstrap next session |
+| server   | not yet `git init` | n/a | placeholder only, defer to Phase 5 |
 
 ## Entry point for next session
 
-> "Bootstrap the five git repos following `SETUP.md` in the umbrella, in order: umbrella → sidecar → engine → game. Skip server. Verify branch protection on the two public repos."
+> "Bootstrap the three active code repos (sidecar, engine, game) following SETUP.md, in that order. Server stays deferred. After bootstrap, update HANDOFF.md and write a session log to docs/sessions/."
