@@ -56,12 +56,15 @@ git checkout -b develop
 gh repo create roguERGlike-sidecar --public --source=. --remote=origin --description "BLE bridge and telemetry pipeline for smart trainers and HR sensors"
 git push -u origin main develop
 
-# Branch protection
+# Branch protection. Use -F (typed) not -f (string) — GitHub's protection
+# endpoint rejects string "true"/"false"/"null"/numbers. The empty contexts
+# array is also required, hence the `[contexts][]` line.
 gh api -X PUT repos/:owner/roguERGlike-sidecar/branches/main/protection \
-  -f required_status_checks[strict]=true \
-  -f enforce_admins=false \
-  -f required_pull_request_reviews[required_approving_review_count]=0 \
-  -f restrictions=null
+  -F 'required_status_checks[strict]=true' \
+  -F 'required_status_checks[contexts][]' \
+  -F enforce_admins=false \
+  -F 'required_pull_request_reviews[required_approving_review_count]=0' \
+  -F restrictions=null
 
 # Local hooks
 pip install pre-commit
