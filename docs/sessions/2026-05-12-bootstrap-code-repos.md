@@ -33,11 +33,17 @@ Per-repo state after bootstrap:
 - Engine: 13 files including the working `src/effort/effort_bridge.gd` and the `card.gd` skeleton.
 - Game: 8 files (design docs, IDEAS.md, .gitattributes for LFS, README, CLAUDE.md, HANDOFF.md).
 
-Umbrella changes on `chore/bootstrap-code-repos`:
-- `.gitignore`: appended `.claude/`
+Umbrella changes on `chore/bootstrap-code-repos` (merged as PR #1):
+- `.gitignore`: appended `.claude/`, anchored `sessions/` and `rides/` to root
 - `HANDOFF.md`: overwrote the five fields; flipped the repo-state table to "bootstrapped, pushed" for sidecar/engine/game; rewrote the entry-point quote
 - `docs/sessions/2026-05-12-bootstrap-code-repos.md`: this file
+- Recovered `docs/sessions/2026-05-12-repo-setup-and-conventions.md` (had been silently uncommitted)
 - Commit: `docs: handoff after bootstrapping sidecar, engine, game` (signed)
+
+Follow-up on `fix/setup-branch-protection-cmd` (merged as PR #2):
+- `SETUP.md`: replaced the broken `gh api -f …` block in Step 2 with the typed-flag form (`-F`) plus the missing `required_status_checks[contexts][]` line, with an inline comment for the next reader
+- Verified by re-applying protection to `roguERGlike-sidecar` (idempotent PUT returned 200)
+- Commit: `fix(setup): use typed -F flags in branch-protection gh api call` (signed)
 
 Tooling installed:
 - `pre-commit 4.6.0` (system-wide via pip)
@@ -58,7 +64,7 @@ Tooling installed:
 
 ## Loose notes
 
-- `gh api -f` always serializes values as strings — GitHub's branch-protection endpoint rejected the SETUP.md invocation with HTTP 422 (`"true" is not a boolean`, etc.). Working solution: write the protection body as raw JSON to a temp file and pass via `gh api --input <file>`. SETUP.md should be updated to use this form before the next person hits it. (Filed mentally; not changed this session because scope was bootstrap-only.)
-- Piping JSON to `gh api --input -` from PowerShell sent a BOM and HTTP 400'd. The temp-file workaround sidesteps both the BOM and the typed-value issue.
+- `gh api -f` always serializes values as strings — GitHub's branch-protection endpoint rejected the SETUP.md invocation with HTTP 422 (`"true" is not a boolean`, etc.). During bootstrap, the workaround was to write the protection body as raw JSON to a temp file and pass via `gh api --input <file>`. **Later in the same session (PR #2) we landed the proper fix in SETUP.md**: use `-F` (typed) instead of `-f`, and include `required_status_checks[contexts][]` (also previously missing). The `-F` form is cross-platform and cleaner than the temp-file workaround.
+- Piping JSON to `gh api --input -` from PowerShell sent a BOM and HTTP 400'd — sidestepped by the temp-file approach during bootstrap, then made moot by switching to `-F`.
 - Signed commits via SSH (`gpg.format=ssh`, `user.signingkey=~/.ssh/id_ed25519.pub`) worked silently on all three initial commits — `git log --show-signature` shows "Good signature" on each.
 - `gh repo create … --source=. --remote=origin` configures the remote but does NOT push — you push manually after. SETUP.md got this right.
