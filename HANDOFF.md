@@ -1,55 +1,58 @@
 # HANDOFF — roguERGlike (umbrella)
 
-> The current state of the project across all four repos. Updated at the end of every session. Read this first.
+> The current state of the project across all repos. Updated at the end of every session. Read this first.
 
-**Last updated:** 2026-05-21
-**Last session log:** `docs/sessions/2026-05-21-hrs-validation-and-mvp-promotion.md` (follows `2026-05-21-hardware-validation-and-merges.md` earlier the same day)
-**Current branch:** `docs/post-hrs-mvp-promotion` (PR pending); sidecar BLE pipeline fully merged on develop
-**Current focus:** **Cycling BLE pipeline complete and live-validated** — KICKR CORE 1003 (FTMS) + Whoop MG5 (HRS) both running concurrently into the engine's MVP HIIT loop. Next: review/merge MVP PR #4 + pick card-system / distance / CSCS as the next code branch.
+**Last updated:** 2026-05-22
+**Last session log:** `docs/sessions/2026-05-22-first-live-ride-and-pause-architecture.md`
+**Current branch:** umbrella `docs/2026-05-22-first-live-ride` (PR pending)
+**Current focus:** **First fully end-to-end live ride completed.** Trainer-control loop (sidecar ↔ KICKR + Whoop) validated; cadence bailout confirmed working in practice; architectural separation between safety bailout and game-flow pause documented. Engine MVP HIIT loop validated but not yet promoted. A second MVP (concert-mvp) shipped in parallel.
 
 ## Where we are
 
-The full cycling-side pipeline is shipped: mock mode for off-bike dev, FTMS bike trainer source, HRS heart-rate source, all merged on the sidecar's `develop`. Both real BLE sources have been validated end-to-end against the engine — a KICKR CORE 1003 streams power+cadence, a Whoop MG5 (broadcast HR enabled in the Whoop app) streams real heart rate, and the engine's MVP HIIT loop on `feat/mvp-playable-loop` renders and responds to all three live signals in real time.
+The single biggest milestone: **a real ERG-controlled bike ride against the engine MVP worked end-to-end.** The sidecar drove the KICKR, the engine MVP set targets through phase transitions, the cadence bailout fired and recovered correctly during natural between-round pauses, and the telemetry recorder captured everything.
 
-The MVP playable loop (PR #4, now promoted to **ready for review**) is the first complete vertical slice of the game: alternating player-turn (recovery + card play) and enemy-interval (high-intensity W/kg push), FTP- and age-derived phase targets, configurable rider profile, live telemetry chart, HP/energy combat skeleton. Single hard-coded strike for now; real card variety is blocked on the card-system foundation (`Effect` + `CombatContext` base classes).
+Three sidecar PRs landed today:
+
+- **#16/#17** (squash-bundled): three bug fixes from the first attempted live ride (bailout `_last_active_ts` reset on first ERG target; forgiving scan loop with `--scan-timeout-s`; explicit `claimed control of <device>` log). Plus the `run-live-test.ps1` launcher.
+- **#18**: `docs/architecture/safety-vs-pause.md` — documents that the cadence bailout is safety, not game flow. Two valid pause patterns (client-side soft target, sidecar-side suspend) chosen by client context.
+- **#19**: `record_session.py` + PowerShell wrapper. JSONL recorder for ride telemetry.
+
+The first attempted live ride yesterday (2026-05-21) didn't get a green run — three real bugs stacked with PowerShell paste fragility. The second attempt today (2026-05-22) succeeded end-to-end on the first try after the fixes landed. Three cadence bailouts fired during the ride; the timing matched the intensity-aware formula exactly (74-78s at ~177W with FTP 250 → predicted 74.4s). But all three fired during between-round UI pauses, not real walk-aways — which surfaced the architectural separation between safety bailout and game-flow pause.
+
+A second MVP repo also shipped today: **`repos/concert-mvp`** — a browser-based YouTube-driven ERG controller. Sibling to engine-mvp, not a replacement. It implements Pattern A (client-side soft pause) and validated the principle in practice.
 
 ## What's next (immediate)
 
-1. **Review + merge engine PR #4** (MVP HIIT playable loop). Then decide whether to iterate the loop further or branch `feat/card-system-foundation` in engine.
-2. **Card-system foundation** (engine `feat/card-system-foundation`) — define minimal `Effect: Resource` with `apply(context)` and `CombatContext: RefCounted` with hand/draw/discard piles. Unblocks `card.gd` parse errors and real card variety.
-3. **Distance deriver** (sidecar `feat/distance-deriver`) — small follow-up. The FTMS decoder already consumes `meters_total` bytes; this branch adds the stateful `last_total → meters_delta` logic outside the decoder and emits `DistanceData` events.
-
-Alternative directions (not blocking the above):
-- **CSCS profile** (sidecar `feat/ble-cscs`) — for older trainers / power meters that expose cadence outside FTMS.
-- **Session recording** (sidecar) — append-only JSONL writer subscribed to `EventBus`; foundation for replay mode and FIT export.
-- **Pairing UI** (sidecar, ~Phase 3) — Zwift-style web pairing screen + persistent device config.
+1. **Decide engine PR #4's fate.** `feat/mvp-playable-loop` was live-validated. Promote it to develop, or keep it as a side experiment while concert-mvp explores the alternate path. Belongs to the user.
+2. **If engine #4 promoted: ship Pattern B pause command.** Sidecar gets `PauseCommand`/`ResumeCommand` + handler that toggles `CadenceBailout.set_paused(...)` + emits `paused`/`resumed` envelopes. Engine emits pause/resume at phase boundaries.
+3. **Sidecar side-tracks** (any one, all small):
+   - Distance deriver (`feat/distance-deriver`) — emit `DistanceData` from FTMS `meters_total`.
+   - CSCS profile (`feat/ble-cscs`) — older trainers / power meters with cadence outside FTMS.
+   - First-class `--record <path>` CLI flag — replace the external `scripts/record_session.py`.
 
 ## Open threads
 
-- **Engine PR #4** (Ready for Review) — MVP HIIT loop awaiting review pass and merge.
-- **Stale stash on `feat/mvp-playable-loop`** in engine: `git stash list` shows "mvp-playable-loop WIP — saved before connection-test branch switch 2026-05-21". The branch has progressed past it (two new feature commits since); likely obsolete. `git stash drop` once you confirm.
-- **`card.gd` parse errors** — still references undefined `Effect` and `CombatContext`. Not fatal (no autoload depends on `Card`), but blocks card variety. Land alongside the foundation branch.
-- **CardRegistry autoload** is a no-op stub. Flesh out alongside card-system work.
-- **Engine derived signals** (`effort_surge_*`, `hr_zone_changed`, `effort_pulse`) are wired through `effort_bridge.gd` but no producer emits them yet. Defer until at least one full ride has been recorded.
-- **Pairing UI** as a near-term project per memory `device-pairing-ux-model` — bootstrap UX (CLI flags) is sufficient for solo dev.
-- **Reconnect-on-drop chaos test** — `BleSource.run`'s reconnect loop is unit-tested but not stress-tested (yank trainer power mid-stream).
-- **First CI runs** still subject to the `github-actions-first-push-quirk` memory — the next push to each repo should fire CI cleanly.
-- **`fit-tool` runtime dep** is carried but unused; for eventual FIT export.
+- **Engine PR #4** open, validated, awaiting promotion decision.
+- **Concert-mvp HANDOFF** notes an open hardening note: `normalizeProfile` doesn't gracefully handle a profile file where every cue has an invalid timestamp. Fine for the bundled profile, must fix before loading external/user-authored profiles.
+- **Whoop broadcast UX is fragile** — broadcast HR mode resets per-activity in the Whoop app. Worth documenting in `repos/sidecar/docs/ble-profiles.md`'s HRS section.
+- **PowerShell long-line paste fragility** — solved for the live test by `run-live-test.ps1` + `record-session.ps1` splatting-based launchers. Use them; don't paste multi-line backtick commands.
 - **Mechanic exploration ideas** in `repos/game/IDEAS.md` (Zone 2 + cognitive load inversion, modifying-vs-charging axis) — not yet promoted to experiments.
 - **Sub-title for the bike-themed first game** — still TBD.
-- **Server architecture (Nakama)** deferred to Phase 5.
+- **Server architecture (Nakama)** deferred.
 - **Mobile / tablet build path** acknowledged as long-term but not designed.
 
 ## Repo state
 
 | Repo | State | Branch | Notes |
 |---|---|---|---|
-| umbrella | docs refresh in flight | `docs/post-hrs-mvp-promotion` | session log + this HANDOFF; PR pending |
-| sidecar  | Full cycling BLE pipeline merged + live-validated | develop (clean) | mock + FTMS + HRS all on develop; KICKR + Whoop MG5 confirmed working |
-| engine   | Handshake merged; MVP HIIT loop ready for review | `feat/mvp-playable-loop` (PR #4) | hardware-validated against bike + HR concurrently |
-| game     | bootstrapped, pushed | develop | no source yet, by design |
-| server   | not yet `git init` | n/a | placeholder only, defer to Phase 5 |
+| umbrella | docs refresh in flight | `docs/2026-05-22-first-live-ride` | session log + this HANDOFF; PR pending |
+| sidecar | trainer-control loop live-validated end-to-end | develop has everything; docs branch in flight | 113/113 unit tests; ruff + mypy clean |
+| engine | bridge fully wired; MVP loop on `feat/mvp-playable-loop` (PR #4 open) | develop is bridge-only | MVP worktree at `repos/engine-mvp/` was the live-ride engine surface |
+| engine-mvp | live-ride engine surface (worktree of engine `feat/mvp-playable-loop`) | feat/mvp-playable-loop | tied to engine PR #4's fate |
+| concert-mvp | browser-based YouTube ERG controller; shipped Pattern A pause | develop | 7/7 controller tests; static HTML + ES modules |
+| game | bootstrapped, no source yet | develop | by design |
+| server | not yet `git init` | n/a | placeholder, defer |
 
 ## Entry point for next session
 
-> "Review and merge engine PR #4 (MVP HIIT playable loop). After merge, pick one of: (a) `feat/card-system-foundation` in engine — minimal Effect + CombatContext base classes so `card.gd` parses and real card variety can land on top of the MVP loop; (b) `feat/distance-deriver` in sidecar — stateful FTMS distance deriver outside the pure decoder; (c) `feat/ble-cscs` in sidecar — third BLE profile for older trainers / power meters that expose cadence outside FTMS."
+> "First fully end-to-end live ERG ride is done — sidecar trainer-control loop is validated. Decide engine PR #4: promote `feat/mvp-playable-loop` to develop or keep as side experiment? If promoting, ship Pattern B pause command (sidecar `PauseCommand`/`ResumeCommand` + engine phase-boundary emits; contract in `repos/sidecar/docs/architecture/safety-vs-pause.md`). Sidecar alt tracks: distance deriver, CSCS profile, first-class `--record` flag. Concert-mvp lives at `repos/concert-mvp/` as a parallel exploration — don't conflate with engine-mvp."
