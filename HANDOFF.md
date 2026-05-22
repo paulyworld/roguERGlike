@@ -3,38 +3,36 @@
 > The current state of the project across all four repos. Updated at the end of every session. Read this first.
 
 **Last updated:** 2026-05-21
-**Last session log:** `docs/sessions/2026-05-21-hrs-validation-and-mvp-promotion.md` (follows `2026-05-21-hardware-validation-and-merges.md` earlier the same day)
-**Current branch:** `docs/post-hrs-mvp-promotion` (PR pending); sidecar BLE pipeline fully merged on develop
-**Current focus:** **Cycling BLE pipeline complete and live-validated** — KICKR CORE 1003 (FTMS) + Whoop MG5 (HRS) both running concurrently into the engine's MVP HIIT loop. Next: review/merge MVP PR #4 + pick card-system / distance / CSCS as the next code branch.
+**Last session log:** `docs/sessions/2026-05-21-ftms-erg-end-to-end.md` (third of three same-day logs; follows `-hardware-validation-and-merges.md` and `-hrs-validation-and-mvp-promotion.md`)
+**Current branch:** umbrella `docs/post-trainer-control-end-to-end` (PR pending). Engine MVP loop with ERG wiring is in flight on `feat/mvp-playable-loop` (PR #4 ready for review).
+**Current focus:** **Trainer control loop is shipped end-to-end and ready for the engine-driven live test.** Sidecar capabilities + writes + replay fix all on develop; engine bridge on develop; MVP scene wires ERG to phase transitions. Next concrete action: ride the full warmup → recovery → interval loop against the KICKR + Whoop and confirm resistance tracks the engine's targets.
 
 ## Where we are
 
-The full cycling-side pipeline is shipped: mock mode for off-bike dev, FTMS bike trainer source, HRS heart-rate source, all merged on the sidecar's `develop`. Both real BLE sources have been validated end-to-end against the engine — a KICKR CORE 1003 streams power+cadence, a Whoop MG5 (broadcast HR enabled in the Whoop app) streams real heart rate, and the engine's MVP HIIT loop on `feat/mvp-playable-loop` renders and responds to all three live signals in real time.
+Full trainer-control feature shipped across both code repos this session: sidecar reads FTMS Feature characteristics + capabilities event (PR #9), claims control + accepts `set_target_power` over a bidirectional WS (PR #11, re-landed after a GitHub stacked-PR retarget snafu), replays control-lifecycle events to late subscribers (PR #12), engine's `EffortBridge` gained the matching write-side API + capability gating (engine PR #7), and the MVP HIIT scene now calls `EffortBridge.set_target_power(...)` on each phase transition with all calls gated on `supports_target_power`. KICKR was live-validated against the sidecar-side writes via a Python WS probe (100 → 250 W ramp, all `accepted=true`, rider reported the resistance steps felt clean); engine-as-driver validation is the **immediate next action** — three-window setup, ride, observe the trainer responding to the loop's intended phases in real time.
 
-The MVP playable loop (PR #4, now promoted to **ready for review**) is the first complete vertical slice of the game: alternating player-turn (recovery + card play) and enemy-interval (high-intensity W/kg push), FTP- and age-derived phase targets, configurable rider profile, live telemetry chart, HP/energy combat skeleton. Single hard-coded strike for now; real card variety is blocked on the card-system foundation (`Effect` + `CombatContext` base classes).
+Also new this session: `scripts/record_session.py` in the sidecar — a small WS subscriber that dumps every envelope to gitignored JSONL for diagnostic capture. Pairs with the screenshot pattern from previous live tests.
 
 ## What's next (immediate)
 
-1. **Review + merge engine PR #4** (MVP HIIT playable loop). Then decide whether to iterate the loop further or branch `feat/card-system-foundation` in engine.
-2. **Card-system foundation** (engine `feat/card-system-foundation`) — define minimal `Effect: Resource` with `apply(context)` and `CombatContext: RefCounted` with hand/draw/discard piles. Unblocks `card.gd` parse errors and real card variety.
-3. **Distance deriver** (sidecar `feat/distance-deriver`) — small follow-up. The FTMS decoder already consumes `meters_total` bytes; this branch adds the stateful `last_total → meters_delta` logic outside the decoder and emits `DistanceData` events.
+1. **Engine-driven ERG live test against KICKR + Whoop.** Three PowerShell windows (sidecar with `--allow-trainer-control --disconnect-bailout-s 900`, JSONL recorder, Godot pointed at the `engine-mvp` worktree). Configure rider settings (suggest Warmup=2min for a fast first pass). Press Start Workout. Trainer should ramp during warmup, drop to ~55% FTP for recovery, slam to ~120% FTP for intervals. HR streams from the Whoop concurrently. Save the screenshot + JSONL recording as the validation artifact.
+2. **Merge engine PR #4 (MVP HIIT playable loop)** once the live test validates. PR body needs a body refresh first — current text predates the session's substantial UX additions (settings panel, per-metric charts, big readouts, target meters, warmup phase, ERG wiring).
+3. **Card-system foundation** (`Effect: Resource` with `apply(context)`, `CombatContext: RefCounted` with hand/draw/discard piles) on `feat/card-system-foundation` in the engine. Currently the MVP loop has two hard-coded cards (Power Strike, Cadence Guard); real variety needs the foundation.
 
-Alternative directions (not blocking the above):
-- **CSCS profile** (sidecar `feat/ble-cscs`) — for older trainers / power meters that expose cadence outside FTMS.
-- **Session recording** (sidecar) — append-only JSONL writer subscribed to `EventBus`; foundation for replay mode and FIT export.
-- **Pairing UI** (sidecar, ~Phase 3) — Zwift-style web pairing screen + persistent device config.
+Alternative next steps once PR #4 lands:
+- Sidecar `--record <path>` as a first-class flag (replacing the script).
+- FTMS SIM mode (slope/wind/CRR) — gated on `indoor_bike_simulation: true`. Useful when a non-HIIT mechanic wants the trainer to feel like a hill.
+- Distance deriver (sidecar) so FTMS emits `DistanceData`.
+- CSCS profile (sidecar) for older trainers / power meters with cadence outside FTMS.
 
 ## Open threads
 
-- **Engine PR #4** (Ready for Review) — MVP HIIT loop awaiting review pass and merge.
-- **Stale stash on `feat/mvp-playable-loop`** in engine: `git stash list` shows "mvp-playable-loop WIP — saved before connection-test branch switch 2026-05-21". The branch has progressed past it (two new feature commits since); likely obsolete. `git stash drop` once you confirm.
-- **`card.gd` parse errors** — still references undefined `Effect` and `CombatContext`. Not fatal (no autoload depends on `Card`), but blocks card variety. Land alongside the foundation branch.
-- **CardRegistry autoload** is a no-op stub. Flesh out alongside card-system work.
-- **Engine derived signals** (`effort_surge_*`, `hr_zone_changed`, `effort_pulse`) are wired through `effort_bridge.gd` but no producer emits them yet. Defer until at least one full ride has been recorded.
-- **Pairing UI** as a near-term project per memory `device-pairing-ux-model` — bootstrap UX (CLI flags) is sufficient for solo dev.
-- **Reconnect-on-drop chaos test** — `BleSource.run`'s reconnect loop is unit-tested but not stress-tested (yank trainer power mid-stream).
-- **First CI runs** still subject to the `github-actions-first-push-quirk` memory — the next push to each repo should fire CI cleanly.
-- **`fit-tool` runtime dep** is carried but unused; for eventual FIT export.
+- **Engine PR #4 ready for review**; awaiting live validation pass before merge.
+- **`card.gd` parse errors** — references undefined `Effect` / `CombatContext`. Lands with the foundation PR.
+- **Disconnect-bailout default** (`--disconnect-bailout-s 10`) is friendly to "trainer connected to one app at a time" but unfriendly to "set up sidecar, then engine, then ride" — tests have been bumping it to 600–900s. Might revisit default to ~30s. Not urgent.
+- **MVP scene lives under engine `tests/`** — once a real test runner lands and the loop is more than a prototype, it should move to `repos/game/` per the engine/game boundary in the per-repo CLAUDE.md docs.
+- **Engine CI's `godot-headless-tests` runs with `|| true`** — boots Godot but doesn't enforce assertions. Plumbing for a real runner (GUT or hand-rolled) still pending.
+- **Stacked-PR retarget gotcha** (lesson from this session): GitHub does NOT auto-retarget the child PR when the parent merges if the parent branch isn't deleted. Always re-base + re-PR if the stacked merge goes sideways.
 - **Mechanic exploration ideas** in `repos/game/IDEAS.md` (Zone 2 + cognitive load inversion, modifying-vs-charging axis) — not yet promoted to experiments.
 - **Sub-title for the bike-themed first game** — still TBD.
 - **Server architecture (Nakama)** deferred to Phase 5.
@@ -44,12 +42,12 @@ Alternative directions (not blocking the above):
 
 | Repo | State | Branch | Notes |
 |---|---|---|---|
-| umbrella | docs refresh in flight | `docs/post-hrs-mvp-promotion` | session log + this HANDOFF; PR pending |
-| sidecar  | Full cycling BLE pipeline merged + live-validated | develop (clean) | mock + FTMS + HRS all on develop; KICKR + Whoop MG5 confirmed working |
-| engine   | Handshake merged; MVP HIIT loop ready for review | `feat/mvp-playable-loop` (PR #4) | hardware-validated against bike + HR concurrently |
+| umbrella | docs refresh in flight | `docs/post-trainer-control-end-to-end` | session log + this HANDOFF; PR pending |
+| sidecar  | Full trainer-control loop merged + KICKR live-validated (write side) | develop (clean) | PRs #9, #11, #12 all merged; `scripts/record_session.py` for diagnostics |
+| engine   | Bridge write-API merged; MVP loop wires ERG to phases | develop has bridge; `feat/mvp-playable-loop` has the MVP loop + ERG wiring (PR #4 ready for review) | mvp lives in a separate worktree at `repos/engine-mvp/` |
 | game     | bootstrapped, pushed | develop | no source yet, by design |
 | server   | not yet `git init` | n/a | placeholder only, defer to Phase 5 |
 
 ## Entry point for next session
 
-> "Review and merge engine PR #4 (MVP HIIT playable loop). After merge, pick one of: (a) `feat/card-system-foundation` in engine — minimal Effect + CombatContext base classes so `card.gd` parses and real card variety can land on top of the MVP loop; (b) `feat/distance-deriver` in sidecar — stateful FTMS distance deriver outside the pure decoder; (c) `feat/ble-cscs` in sidecar — third BLE profile for older trainers / power meters that expose cadence outside FTMS."
+> "Resume the engine-driven ERG live test. Three windows: sidecar with `--mode live --device-bike KICKR --device-hr mudrat --allow-trainer-control --disconnect-bailout-s 900`; `python scripts/record_session.py` once both devices show connected; Godot on the engine-mvp worktree, ▶ Play, ride through warmup → recovery → interval. Confirm KICKR resistance tracks engine-driven targets; HR flows from the Whoop concurrently. Screenshot + JSONL go in `docs/screenshots/` and `docs/recordings/`; engine PR #4 (MVP HIIT loop) is ready to merge if green."
