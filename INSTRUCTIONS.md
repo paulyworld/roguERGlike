@@ -16,13 +16,13 @@ This document is the **canonical source of conventions** for the entire ERGlike 
 └── repos/                          ← gitignored; each subdir is its own repo
     ├── sidecar/                    ← roguERGlike-sidecar (public, MIT)
     ├── engine/                     ← roguERGlike-engine  (public, MIT)
-    ├── concert-mvp/                ← codename gizzERG (local-only, planned public)
+    ├── concert-mvp/                ← gizzERG             (public, MIT)
     ├── engine-mvp/                 ← worktree of engine's feat/mvp-playable-loop
     ├── game/                       ← roguERGlike-game    (private)
     └── server/                     ← roguERGlike-server  (private, deferred)
 ```
 
-The umbrella tracks conventions and project-wide state. The repos under `repos/` are independent git checkouts (except `engine-mvp` which is a worktree of `engine`, and `concert-mvp` which doesn't yet have a remote). Each has its own `CLAUDE.md` and `HANDOFF.md`.
+The umbrella tracks conventions and project-wide state. The repos under `repos/` are independent git checkouts (except `engine-mvp` which is a worktree of `engine`). Each has its own `CLAUDE.md` and `HANDOFF.md`.
 
 ## Session conventions
 

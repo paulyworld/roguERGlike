@@ -27,17 +27,17 @@ The same card mechanic ("sprint surge generates bonus damage") works whether the
 
 ## The code repos
 
-| Path | GitHub repo (current) | Visibility | Purpose | License |
+| Path | GitHub repo | Visibility | Purpose | License |
 |---|---|---|---|---|
 | `repos/sidecar/` | roguERGlike-sidecar | **Public** | BLE bridge, telemetry, FIT/TCX/GPX export | MIT |
 | `repos/engine/`  | roguERGlike-engine  | **Public** | Godot 4 deckbuilder framework | MIT |
-| `repos/concert-mvp/` | *(local-only, codename **gizzERG**)* | (planned public) | Browser ERG controller driven by YouTube concert profiles. Currently the primary near-term riding experience. | MIT (planned) |
+| `repos/concert-mvp/` | **gizzERG** | **Public** | Browser ERG controller driven by YouTube concert profiles. Currently the primary near-term riding experience. | MIT |
 | `repos/game/`    | roguERGlike-game    | **Private** | First game: cards, balance, art, theme | All rights reserved |
 | `repos/server/`  | roguERGlike-server  | **Private** | Online matchmaking, leaderboards — deferred | All rights reserved |
 
 ### gizzERG codename
 
-`concert-mvp` is codenamed **gizzERG** — a play on King Gizzard & The Lizard Wizard (whose Greek tour video drives the first concert profile) and the ERG ergometer family. The codename is intentionally evocative for the current concert focus; the implementation generalizes to any YouTube-driven ride map. When concert-mvp moves to GitHub it'll likely take the codename directly.
+`concert-mvp` lives on GitHub as **paulyworld/gizzERG** — a play on King Gizzard & The Lizard Wizard (whose Greek tour video drives the first concert profile) and the ERG ergometer family. The codename is intentionally evocative for the current concert focus; the implementation generalizes to any YouTube-driven ride map.
 
 ## Training modalities as level archetypes
 
