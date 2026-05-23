@@ -20,44 +20,50 @@ The 2026-05-22 live ride validated the sidecar trainer-control loop end-to-end a
 **1. Codex's direction shift in engine HANDOFF.** `repos/engine/HANDOFF.md` and the new docs under `repos/engine/docs/` reorient the project around `repos/concert-mvp` as the primary near-term riding experience. Engine PR #4 (`feat/mvp-playable-loop`) is parked as a side experiment. Pattern B pause moves to sidecar as core protocol, not as a reason to promote the Godot MVP. Ownership split: Claude → sidecar/protocol/runtime; Codex → concert-mvp UI + engine bridge.
 
 **2. Three sidecar work-streams started today.** All on the alt-tracks queue from yesterday:
-- **PR #21 `feat/record-flag`** — first-class `--record` CLI flag replacing the external `scripts/record_session.py`. Live-validated against the KICKR with concert-mvp; 3391-event ride captured cleanly. **Ready to merge; not blocked.**
-- **PR #22 `feat/rider-annotations`** — typed `annotate` command + `rider_annotation` envelope so clients can mark moments mid-ride (closes the 2026-05-22 "this bailout was a ui-pause, not a walk-away" debugging gap). 120/120 tests, schema docs updated. **Held pending schema reconciliation with Codex.**
-- **gizzERG `feat/rider-annotations`** — F2 overlay + preset hotkeys + chart markers, paired with PR #22's schema. 24/24 tests. Pushed to the newly-bootstrapped `paulyworld/gizzERG` (no PR yet — held pending schema decision; will be opened in lockstep with PR #22 update).
-- **engine PR #12** — sidecar's response doc to Codex's review brief, with hybrid annotation schema counter-proposal and answers to the six open questions.
+- **sidecar PR #21 `feat/record-flag`** — first-class `--record` CLI flag replacing the external `scripts/record_session.py`. Live-validated against the KICKR with gizzERG; 3391-event ride captured cleanly. **Ready to merge.**
+- **sidecar PR #22 `feat/rider-annotations`** — typed `annotate` command + `rider_annotation` envelope, updated to the hybrid schema (`tag`, `note?`, `client_id?`, `client_time_s?`, `context?`) per Codex review. Expanded recommended vocabulary covers the tuning-feedback loop. 125/125 tests, schema docs updated. **Ready to merge.**
+- **gizzERG PR #1 `feat/rider-annotations`** — F2 overlay + preset hotkeys + chart markers + terrain route model (Codex commit `77c1b48`) + hybrid schema usage. Auto-populates `context` from current ride state at F2 press. 36/36 tests. **Ready for review.**
+- **engine PR #12 `docs/sidecar-review-response`** — sidecar's response doc to Codex's review brief. Codex approved the hybrid schema; both client PRs updated. **Mergeable as historical record.**
 
-## Annotation schema reconciliation
+## Annotation schema — resolved 2026-05-23
 
-Concrete disagreement between PR #22 (already shipped) and Codex's brief in `repos/engine/docs/claude-sidecar-review-brief.md`:
+Codex approved the hybrid schema in engine PR #12. Final shape:
 
-| Field | PR #22 shipped | Codex brief proposed |
-|---|---|---|
-| Category | `tag` (open string) | `reason` (enum-leaning) |
-| Free text | `note` | (none) |
-| Input mechanism | (none) | `label: "F2"` ← violates `[[client-input-sidecar-contract]]` memory |
-| Client ride time | (missing) | `client_time_s` ← good addition |
-| Rich context | (missing) | `context` blob ← good addition |
+```json
+{
+  "type": "annotate",
+  "tag": "too-hard",
+  "note": "optional free text (≤280)",
+  "client_id": "gizzERG",
+  "client_time_s": 2412.5,
+  "context": { "any": "client-side opaque blob — recommended shape in event-schema.md" }
+}
+```
 
-**Hybrid counter-proposal** (in engine PR #12): `{tag, note?, client_id?, client_time_s?, context?}`. Keep `tag` open-string, drop `label`, adopt `client_time_s` + `context`.
+Sidecar treats `context` opaque. Recommended fields by convention (analyzers join on these): `profile_id`, `profile_version`, `mode`, `video_id`, `section`, `target_watts`, `power`, `cadence`, `hr`, `wkg`, `grade`, `speed_kph`, `distance_m`, `elevation_gain_m`, `hardware_source`.
 
-Once Codex agrees: I update PR #22 (<1 hour) and the held concert-mvp diff, then both can land.
+Expanded tag vocabulary covers the model-training feedback loop (Codex's `concert-mode-exploration.md`): `too-hard`, `too-easy`, `bad-sync`, `false-intensity`, `missed-intensity`, `cadence-mismatch` join the existing `ui-pause`, `walk-away`, `bug`, `marker`.
 
 ## What's next (immediate)
 
-1. **Wait for Codex's review of engine PR #12.** Schema agreement unblocks PR #22 + concert-mvp F2 work.
-2. **Sidecar PR #21 (`--record`) can merge anytime** — independent of the schema discussion.
-3. **Then resume Codex's sequence:**
-   - Item #1 hello/feature-negotiation envelope (sidecar)
-   - Item #3 Pattern B structured pause (sidecar)
-   - Item #4 distance + FIT export groundwork (sidecar)
-   - Item #5 Terrain/SIM protocol (sidecar)
-4. **When the three legacy repos rename** (drop the `roguERGlike-` prefix), do it in one coordinated sweep — once protocol work settles and PRs are quiet.
+1. **Merge the three open PRs in any order** — sidecar #21, sidecar #22, gizzERG #1. Engine #12 mergeable as historical record.
+2. **Resume Codex's sequence** once the annotation pair lands:
+   - Item #1 hello/feature-negotiation envelope (sidecar) — protocol versioning + capability advertisement
+   - Item #3 Pattern B structured pause (sidecar) — `pause` / `resume` commands + `paused` / `resumed` envelopes
+   - Item #4 distance + FIT export groundwork (sidecar) — depends on `[[terrain-distance-ownership]]` rules: distinguish synthetic / trainer-reported / GPS
+   - Item #5 Terrain/SIM protocol (sidecar) — FTMS Set Indoor Bike Simulation Parameters; gated on device capability
+3. **Codex's gizzERG follow-ups** in parallel (per `repos/engine/docs/concert-mode-exploration.md`):
+   - Terrain Mode UI prototype (ERG Terrain skin first; client-side distance/elevation per `[[terrain-distance-ownership]]`)
+   - SvelteKit migration when the prototype settles
+   - Dev/test terrain tuning popout
+4. **Live-ride validation** of the annotation pair once both merge: F2 mid-ride, verify recording contains the context fields populated correctly.
+5. **When the three legacy repos rename** (drop the `roguERGlike-` prefix), do it in one coordinated sweep — once protocol work settles and PRs are quiet.
 
 ## Open threads
 
-- **Annotation schema reconciliation** in flight — engine PR #12, blocking sidecar PR #22 and concert-mvp F2 work.
 - **Engine PR #4** stays open as side experiment per Codex's direction; not the near-term focus.
-- **gizzERG `feat/rider-annotations`** branch on GitHub but no PR yet — held until the schema is reconciled. Will open in lockstep with sidecar PR #22's schema update.
-- **Codex's open questions** (in `repos/engine/docs/claude-sidecar-review-brief.md`) answered in `repos/engine/docs/sidecar-review-response.md`.
+- **Codex's open questions** (in `repos/engine/docs/claude-sidecar-review-brief.md`) answered in `repos/engine/docs/sidecar-review-response.md`; all six confirmed by Codex with the terrain-distance nuance captured in memory `[[terrain-distance-ownership]]`.
+- **gizzERG terrain math** landed on the annotation branch (Codex `77c1b48`). Next step is the Terrain Mode UI prototype on a fresh branch per the engine's `concert-mode-exploration.md`.
 - **Whoop broadcast UX is fragile** — broadcast HR mode resets per-activity in the Whoop app.
 - **PowerShell long-line paste fragility** — use `run-live-test.ps1` rather than pasting backtick continuations.
 
@@ -68,11 +74,11 @@ Once Codex agrees: I update PR #22 (<1 hour) and the held concert-mvp diff, then
 | umbrella | ERGlike umbrella | roguERGlike | `docs/erglike-rebrand-and-codex-sync` (this branch) |
 | `repos/sidecar/` | sidecar | roguERGlike-sidecar | `develop` clean; PR #21 (`--record`, ready), PR #22 (annotations, **hold**) |
 | `repos/engine/` | engine framework | roguERGlike-engine | `develop` clean; PR #12 (sidecar response doc) open; PR #4 (MVP loop) parked |
-| `repos/concert-mvp/` | **gizzERG** | paulyworld/gizzERG (public, MIT) | `main` clean (branch-protected); `feat/rider-annotations` pushed (no PR — held pending schema) |
+| `repos/concert-mvp/` | **gizzERG** | paulyworld/gizzERG (public, MIT) | `main` clean (branch-protected); PR #1 (F2 + terrain model + hybrid schema) open |
 | `repos/engine-mvp/` | engine MVP worktree | (worktree of engine) | tied to engine PR #4 |
 | `repos/game/` | game | roguERGlike-game | `develop`, no source yet |
 | `repos/server/` | server | *(none — deferred)* | placeholder |
 
 ## Entry point for next session
 
-> "Two PRs ready and one held. Sidecar PR #21 (`--record`) can merge anytime. PR #22 (annotations) is held pending engine PR #12's schema-reconciliation review — Codex's brief proposed a different annotation shape; counter-proposal is a hybrid `{tag, note?, client_id?, client_time_s?, context?}`. gizzERG (the renamed concert-mvp) is now on GitHub at paulyworld/gizzERG with main + feat/rider-annotations pushed; F2 PR opens once schema is agreed. Project rebrand to ERGlike is docs-only for the three legacy repos; rename deferred."
+> "Annotation schema settled (hybrid `{tag, note?, client_id?, client_time_s?, context?}`); three PRs ready to merge — sidecar #21 (`--record`), sidecar #22 (annotations), gizzERG #1 (F2 + terrain model + hybrid schema). Engine PR #12 is the historical record of the agreement. Next: live-ride validation of the annotation pair, then resume Codex's sequence — sidecar `hello` envelope (item #1), Pattern B pause (item #3), distance/FIT export (item #4), SIM mode (item #5). gizzERG side: Terrain Mode UI prototype per `concert-mode-exploration.md`."
