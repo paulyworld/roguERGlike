@@ -2,10 +2,10 @@
 
 > The current state of the project across all repos. Updated at the end of every session. Read this first.
 
-**Last updated:** 2026-05-23
-**Last session log:** `docs/sessions/2026-05-22-first-live-ride-and-pause-architecture.md`
-**Current branch:** umbrella `docs/erglike-rebrand-and-codex-sync`
-**Current focus:** Cross-track sync after Codex shipped a major direction shift in `repos/engine`. Project rebranded `roguERGlike` → `ERGlike` (docs only; existing GitHub repo renames deferred). concert-mvp bootstrapped on GitHub as **paulyworld/gizzERG** (public, MIT, branch protection on main). Three sidecar PRs are in flight or proposed; one of them (#22 annotations) is held pending schema reconciliation with Codex.
+**Last updated:** 2026-05-23 (end of session)
+**Last session log:** `docs/sessions/2026-05-23-rebrand-and-annotations-end-to-end.md`
+**Current branch:** umbrella `docs/2026-05-23-session-log` (this session log)
+**Current focus:** Annotation primitive shipped end-to-end across sidecar + gizzERG. Project rebranded `roguERGlike` → `ERGlike` (docs-only); concert-mvp bootstrapped as **paulyworld/gizzERG**. Codex's sequence item #1 (`hello` envelope) is queued as the next sidecar piece. PR #13 (music intensity proposal) awaits Codex review.
 
 ## Project rename (docs-only for now)
 
