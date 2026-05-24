@@ -1,11 +1,13 @@
-# Instructions — Working on roguERGlike
+# Instructions — Working on ERGlike
 
-This document is the **canonical source of conventions** for the entire roguERGlike project across all four repos. Every Claude session (chat, Cowork, Claude Code) should treat this as authoritative. If a convention here conflicts with something elsewhere, this file wins until updated.
+This document is the **canonical source of conventions** for the entire ERGlike project across all repos. Every Claude session (chat, Cowork, Claude Code) should treat this as authoritative. If a convention here conflicts with something elsewhere, this file wins until updated.
+
+> **Naming note (2026-05-23):** The project was renamed `roguERGlike` → `ERGlike`. The old prefix locked us into a single genre; the umbrella now covers concert-driven rides (codename **gizzERG**), terrain modes, and other non-roguelike experiences. GitHub repo names still read `roguERGlike-*` for now — coordinated rename deferred to a clean break point.
 
 ## Project structure (on disk)
 
 ```
-~/dev/roguERGlike/                  ← umbrella (this repo)
+~/dev/roguERGlike/                  ← umbrella (this repo — directory keeps its old name for now)
 ├── INSTRUCTIONS.md                 ← you are here
 ├── HANDOFF.md                      ← cross-repo current state
 ├── CLAUDE.md                       ← Claude-specific entry point
@@ -14,11 +16,13 @@ This document is the **canonical source of conventions** for the entire roguERGl
 └── repos/                          ← gitignored; each subdir is its own repo
     ├── sidecar/                    ← roguERGlike-sidecar (public, MIT)
     ├── engine/                     ← roguERGlike-engine  (public, MIT)
+    ├── concert-mvp/                ← gizzERG             (public, MIT)
+    ├── engine-mvp/                 ← worktree of engine's feat/mvp-playable-loop
     ├── game/                       ← roguERGlike-game    (private)
     └── server/                     ← roguERGlike-server  (private, deferred)
 ```
 
-The umbrella tracks conventions and project-wide state. The four repos under `repos/` are independent git checkouts. Each has its own `CLAUDE.md` and `HANDOFF.md`.
+The umbrella tracks conventions and project-wide state. The repos under `repos/` are independent git checkouts (except `engine-mvp` which is a worktree of `engine`). Each has its own `CLAUDE.md` and `HANDOFF.md`.
 
 ## Session conventions
 
