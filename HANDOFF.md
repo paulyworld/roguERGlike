@@ -2,23 +2,24 @@
 
 > The current state of the project across all repos. Updated at the end of every session. Read this first.
 
-**Last updated:** 2026-05-25
+**Last updated:** 2026-05-25 (live-validation session)
 **Last session log:** `docs/sessions/2026-05-24-sidecar-sequence-complete.md`
-**Current branch:** umbrella `docs/vocabulary-and-drift-fix-merged`
-**Current focus:** Codex's sidecar sequence fully merged. Today's session resolved the three follow-up items from yesterday: canonical vocabulary doc landed (engine PR #14 → develop), gizzERG HANDOFF drift fix landed (gizzERG PR #2 → develop), and the intensity-scale question is pinned in the vocabulary doc with industry-standard Coggan zones. Strava verification still pending. Codex's `set_terrain_profile` work expected on the gizzERG side.
+**Current branch:** umbrella `docs/2026-05-24-live-validations-closed`
+**Current focus:** Three big acceptance items closed against real hardware today. Live-ride smoke validated Pattern B structured pause + SIM mode end-to-end on the KICKR (textbook-perfect timeline, no anomalies). Strava manual upload confirmed working from sidecar-exported FIT. FIT exporter pre-emptively gained `elevation` handling so when gizzERG starts pushing synthetic elevation samples, they flow to Strava/TP without further sidecar work. Plus a new hands-free smoke runner (`run-smoke-pause-sim.ps1`) so future protocol regressions are scriptable.
 
-## ⚠️ Return-to: Strava / TrainingPeaks FIT upload verification
+## Live-validation status
 
-The FIT export (sidecar PR #25) is **code-complete and parser-validated**, but the acceptance criterion from the brief — "manual FIT upload works in Strava / manual FIT upload works in TrainingPeaks" — needs the rider to actually upload one. Quick rep:
+| Acceptance item | Status |
+|---|---|
+| FIT export — Strava manual upload | ✅ Confirmed. Test FIT (from pre-distance ride) uploaded cleanly. |
+| FIT export — TrainingPeaks manual upload | ⏳ Pending (low priority — Strava is the primary platform; TP can wait until a richer test ride exists) |
+| Pattern B structured pause — live KICKR | ✅ Smoke run validated all five acceptance criteria: deferred-paused rejection, ramp to deferred target (not pre-pause), no spurious cadence bailout during structured pause, clean envelope timing, idempotency |
+| SIM mode — live KICKR | ✅ Smoke run validated 5%/9%/-3% grade transitions + switch-back-to-ERG. KICKR CORE 1003 firmware does advertise `indoor_bike_simulation` — confirmed. |
+| FIT export — richer ride (distance + elevation populated) | ⏳ Awaiting either (a) a full ERG ride on the KICKR with FTMS distance flowing, or (b) gizzERG Terrain Mode ride with synthetic elevation. Sidecar already handles both; just needs a real recording. |
 
-```powershell
-cd C:\dev\roguERGlike\repos\sidecar
-roguerglike-export fit docs/recordings/20260523_121056.jsonl ride.fit
-# → drag ride.fit into Strava (https://www.strava.com/upload/select)
-#   and TrainingPeaks. Report back any rejection errors.
-```
+## Strava Relative Effort note
 
-Until this is done, the note stays at the top of HANDOFF.
+Strava computes Relative Effort (RE) server-side from HR-zone time-in-zone. **Not an input** — can't be set in the FIT. As long as your sidecar recording has continuous HR samples (Whoop or chest strap), RE will compute meaningfully when you upload. TrainingPeaks uses TSS instead; same FIT file, different lens. Documented in `repos/engine/docs/vocabulary.md` Part 2 if needed for future reference.
 
 ## Canonical vocabulary
 
@@ -56,18 +57,28 @@ All five items from `repos/engine/docs/claude-sidecar-review-brief.md` are merge
 
 ## What's next
 
-1. **Strava / TrainingPeaks FIT upload verification** — see top of HANDOFF.
-2. **Live-ride validation of items #3–#5** against the KICKR — code is correct against the FTMS spec; real-trainer firmware quirks are best caught with a real ride.
-3. **Codex picks up `set_terrain_profile`** (item from yesterday's commentary — user assigned to Codex). When that contract lands, Claude implements the sidecar side per the established patterns (typed command, ack envelope, hello feature, mock parity, tests).
-4. **Codex's other gizzERG follow-ups** in parallel:
+1. **Richer FIT export test** — do a real ERG ride on the KICKR with `--record`. Sidecar's distance deriver auto-populates from FTMS `meters_total`; FIT exporter already handles it. Upload to Strava and confirm distance + RE both look reasonable.
+2. **Codex picks up `set_terrain_profile`** (assigned 2026-05-25). When the contract design lands, Claude implements the sidecar side per the established patterns.
+3. **Codex's other gizzERG follow-ups** in parallel:
    - Terrain Mode UI prototype (ERG Terrain skin first; client-side distance/elevation)
    - Scrub-mode profile editor (out-of-ride authoring)
    - Python preprocessing tool (`tools/profile-builder/` — yt-dlp + librosa → derived intensity curve)
    - Blended Terrain Model implementation (per engine `music-intensity-proposal.md` Piece 3b + `vocabulary.md` Part 3)
+4. **Strava auto-upload** (optional follow-up; rider-asked). ~3-4 hours of sidecar work — OAuth flow, refresh token storage, `POST /api/v3/uploads` + async polling, new `--auto-upload-strava` flag. Scope when convenient; manual upload works fine in the meantime.
 5. **Sidecar return-to items** when the gizzERG side asks:
-   - Pattern A vs Pattern B mid-ride switching (sidecar contract handles both; only client UX work needed)
-   - SIM-mode KICKR-specific firmware quirks (if real-trainer write surfaces issues)
-   - `set_terrain_profile` command (per #3 above)
+   - Pattern A vs Pattern B mid-ride switching (sidecar contract handles both)
+   - `set_terrain_profile` command (per #2 above)
+   - SIM-mode firmware quirks for trainers other than KICKR CORE 1003 (only matters when other riders join)
+
+## Today's session — live validations + ergonomics
+
+| Work | What |
+|---|---|
+| Live smoke runner | New `repos/sidecar/scripts/run-smoke-pause-sim.ps1` — hands-free ~100-second auto-paced sequence covering ERG baseline → pause/resume (with deferred-target proof) → SIM 5%/9%/-3% → back to ERG. Rider just pedals; no copy-paste. Future protocol regressions are now scriptable. |
+| Live-ride validation | Smoke run executed on real KICKR; recording at `repos/sidecar/docs/recordings/20260524_194504.jsonl`. Textbook-perfect timeline (analyzed in chat); all PR #24 + PR #26 acceptance criteria validated. |
+| Strava manual upload | Test FIT uploaded successfully. Sport=Indoor Cycling shown correctly. (Test FIT was pre-distance/elevation so a richer follow-up ride is queued.) |
+| FIT exporter elevation handling | Pre-emptive: sidecar PR #31 closes the gap so when gizzERG starts pushing synthetic elevation samples, they flow into Strava/TP exports automatically. 170/170 tests. |
+| send-cmd helper bug fixes | Two PowerShell native-command quoting bugs (heredoc + argv) — final fix uses stdin to bypass PS quoting entirely. |
 
 ## 2026-05-24 commentary items — all resolved 2026-05-25
 
@@ -102,4 +113,4 @@ Codex's pending engine doc edit (Piece 3b Blended Terrain Model in `music-intens
 
 ## Entry point for next session
 
-> "Sidecar sequence + vocabulary doc + drift-fix all landed. **First priority: Strava/TrainingPeaks FIT upload verification** (still pending; quick rep at top of HANDOFF). Second: live-ride validation of pause/SIM against KICKR. Canonical vocabulary now lives at `repos/engine/docs/vocabulary.md` — settles intensity scale (`[0, 2.0]` per Coggan zones), F2 tags, mode names, override events. Codex's lane: `set_terrain_profile` design, Blended Terrain Model implementation, scrub editor, audio preprocessing. gizzERG local develop is 3 commits ahead of origin (Codex's unpushed terrain tooling) — they'll need to rebase against PR #2's HANDOFF pointer addition when they next push."
+> "Three big acceptance items closed against real hardware today: Pattern B structured pause + SIM mode live-validated on KICKR via the new `run-smoke-pause-sim.ps1` hands-free smoke runner (textbook-perfect), Strava manual FIT upload confirmed. Sidecar at 170/170 tests; FIT exporter pre-emptively handles `elevation` for when gizzERG starts pushing synthetic terrain. Next: richer FIT test on a real ride (distance auto-flows; just record + export + upload), Codex's `set_terrain_profile` design when ready, and optional Strava auto-upload (~3-4 hours of OAuth work when convenient). Canonical vocabulary lives at `repos/engine/docs/vocabulary.md`. gizzERG local develop divergence still pending Codex's rebase."
