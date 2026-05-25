@@ -2,10 +2,10 @@
 
 > The current state of the project across all repos. Updated at the end of every session. Read this first.
 
-**Last updated:** 2026-05-24 (late)
+**Last updated:** 2026-05-25
 **Last session log:** `docs/sessions/2026-05-24-sidecar-sequence-complete.md`
-**Current branch:** umbrella `docs/2026-05-24-sidecar-sequence-complete`
-**Current focus:** **All five items in Codex's `claude-sidecar-review-brief.md` sequence are now sidecar-side code-complete and merged.** Sidecar at 169 tests, ruff + mypy clean. Next: live-ride validation + Strava upload verification + Codex's gizzERG work picks up the next phase (Terrain Mode UI, scrub-mode profile editor, audio preprocessing tool).
+**Current branch:** umbrella `docs/vocabulary-and-drift-fix-merged`
+**Current focus:** Codex's sidecar sequence fully merged. Today's session resolved the three follow-up items from yesterday: canonical vocabulary doc landed (engine PR #14 → develop), gizzERG HANDOFF drift fix landed (gizzERG PR #2 → develop), and the intensity-scale question is pinned in the vocabulary doc with industry-standard Coggan zones. Strava verification still pending. Codex's `set_terrain_profile` work expected on the gizzERG side.
 
 ## ⚠️ Return-to: Strava / TrainingPeaks FIT upload verification
 
@@ -19,6 +19,24 @@ roguerglike-export fit docs/recordings/20260523_121056.jsonl ride.fit
 ```
 
 Until this is done, the note stays at the top of HANDOFF.
+
+## Canonical vocabulary
+
+**`repos/engine/docs/vocabulary.md`** is now the single source of truth for terms shared across sidecar schema, gizzERG HANDOFF, engine planning docs, and the F2 annotation overlay. Three parts:
+
+1. **Rider-facing** — F2 tags with plain-language "I want to say X" lookup
+2. **Backend** — intensity scale (Coggan zones / %FTP), annotation context fields, mode names, hardware sources, distance/elevation sources, hello features
+3. **Profile authoring** — Codex's terrain vocab (override types, events, themes)
+
+**Editorial rule:** if a term in another doc disagrees with the vocabulary doc, the vocabulary doc wins until updated. Future sessions: edit there once, reference from elsewhere.
+
+**Intensity scale settled:** `intensity = target_watts / rider_ftp`, schema range `[0, 2.0]` (Z1 active recovery through Z7 neuromuscular sprints). Sidecar's `--max-target-power` flag is the separate hardware-safety clamp at the BLE write layer. Codex's `event:drop intensity:1.05` is intentional Z4 (top of lactate threshold).
+
+## ⚠️ gizzERG / Codex local divergence (pre-existing)
+
+Codex has **three unpushed local commits** on gizzERG `develop` from 2026-05-23 (terrain tooling: derived intensity, terrain timeline, terrain source tooling). My drift-fix PR #2 was deliberately branched from `origin/develop` to avoid bundling Codex's in-flight work — that drift-fix is now on origin/develop, but Codex's local commits will need a rebase against it when they next push gizzERG.
+
+Their local HANDOFF was substantially rewritten in those 3 commits (terrain-dev UI content); my PR #2 just added a 20-line pointer section. The reconcile will likely keep Codex's HANDOFF rewrite + slot in the pointer paragraph somewhere reasonable. **No work lost. Codex's lane to resolve.**
 
 ## Codex's sidecar sequence — DONE
 
@@ -40,31 +58,27 @@ All five items from `repos/engine/docs/claude-sidecar-review-brief.md` are merge
 
 1. **Strava / TrainingPeaks FIT upload verification** — see top of HANDOFF.
 2. **Live-ride validation of items #3–#5** against the KICKR — code is correct against the FTMS spec; real-trainer firmware quirks are best caught with a real ride.
-3. **Codex's gizzERG work picks up the next phase** (per `repos/engine/docs/concert-mode-exploration.md` + `repos/engine/docs/music-intensity-proposal.md`):
+3. **Codex picks up `set_terrain_profile`** (item from yesterday's commentary — user assigned to Codex). When that contract lands, Claude implements the sidecar side per the established patterns (typed command, ack envelope, hello feature, mock parity, tests).
+4. **Codex's other gizzERG follow-ups** in parallel:
    - Terrain Mode UI prototype (ERG Terrain skin first; client-side distance/elevation)
    - Scrub-mode profile editor (out-of-ride authoring)
    - Python preprocessing tool (`tools/profile-builder/` — yt-dlp + librosa → derived intensity curve)
-   - Blended Terrain Model (Codex's in-flight proposal — see uncommitted notes in `repos/concert-mvp/HANDOFF.md` and `repos/engine/docs/music-intensity-proposal.md` Piece 3b)
-4. **Sidecar return-to items** when the gizzERG side asks:
+   - Blended Terrain Model implementation (per engine `music-intensity-proposal.md` Piece 3b + `vocabulary.md` Part 3)
+5. **Sidecar return-to items** when the gizzERG side asks:
    - Pattern A vs Pattern B mid-ride switching (sidecar contract handles both; only client UX work needed)
    - SIM-mode KICKR-specific firmware quirks (if real-trainer write surfaces issues)
-   - `set_terrain_profile` command (when gizzERG terrain UI lands and wants sidecar to own synthetic distance computation per `[[terrain-distance-ownership]]`)
+   - `set_terrain_profile` command (per #3 above)
 
-## Codex's uncommitted notes (2026-05-24 night)
+## 2026-05-24 commentary items — all resolved 2026-05-25
 
-Codex left two documentation-only edits **uncommitted** at end-of-day, asking for Claude review first:
+| Flagged 2026-05-24 | Resolution 2026-05-25 |
+|---|---|
+| F2 annotation vocab + override-event vocab should converge | `repos/engine/docs/vocabulary.md` Parts 1 + 3 (engine PR #14, merged). Same noun names where they refer to the same musical event; different verb-form per layer (riders observe; authors decide). |
+| `event: drop intensity: 1.05` — over-FTP burst or clamp? | Over-FTP burst, intentional. Schema range `[0, 2.0]` per Coggan zones. Pinned in vocabulary.md Part 2 with citations to British Cycling, TrainerRoad, Coggan canonical. |
+| HANDOFF / engine-doc near-mirror drift risk | Engine doc is canonical (`music-intensity-proposal.md` + `vocabulary.md`). gizzERG HANDOFF reduced to a pointer (gizzERG PR #2, merged). Editorial rule baked into vocabulary.md: "if a term in another doc disagrees with this one, this file wins." |
+| `set_terrain_profile` — sidecar pickup when Codex ready | Acknowledged. Awaiting Codex's design. Hooks left in place: `ElevationData` event type exists; `DistanceData.source="synthetic"` already supported. |
 
-- **`repos/concert-mvp/HANDOFF.md`** — new "Blended Terrain Model Proposal" section. UI selector (`Authored cues` / `Derived intensity` / `Blended`), blend slider, sample-step control. Profile shape gains `derived_intensity_curve` (with `model_version` + `sample_step_s`) + `terrain_overrides` (typed events: `cap`, `floor`, `anchor`, `event:crescendo`, `event:drop`, `event:song-boundary`, `manual-override`).
-- **`repos/engine/docs/music-intensity-proposal.md`** — new "Piece 3b — Blended Terrain Model" section. Same content as the gizzERG HANDOFF, calibrated to the engine planning doc. Closes with a 5-step implementation plan for Codex, including "Keep sidecar out of this until route profiles are being sent for recorded distance/elevation authority" — explicit handoff signal.
-
-**Claude commentary, for tomorrow's session:**
-
-- Architecture is right. Blend = derived signal modified by authored overrides (not arithmetic averaging) is the correct framing.
-- `model_version` on the derived curve picks up the long-term hook flagged in PR #13's crowdsourcing section — good.
-- Override events overlap with F2 annotation vocabulary (`crescendo`, `song-boundary`, etc.). **Should converge to one vocabulary** so post-ride analyzers can join F2 annotations against authored overrides. Worth a 5-minute sync next session.
-- `event: drop intensity: 1.05` (>1.0 on normalized scale): clarify whether this is "over-FTP burst" (intentional) or "over-normalized" (engine should clamp).
-- The HANDOFF section and engine doc section are near-mirrors. Risk of drift — recommend either consolidating (engine doc is canonical; gizzERG HANDOFF summarizes + links) or actively keeping in sync on every edit.
-- Step 5 ("Keep sidecar out until route profiles are sent") respects ownership split. Claude can pick up the `set_terrain_profile` work when Codex says ready.
+Codex's pending engine doc edit (Piece 3b Blended Terrain Model in `music-intensity-proposal.md`, branch `docs/music-intensity-proposal`) is still uncommitted — that's Codex's commit to make. The vocabulary doc anchors the terms they'll use when they commit.
 
 ## Open threads (cross-cutting)
 
@@ -80,12 +94,12 @@ Codex left two documentation-only edits **uncommitted** at end-of-day, asking fo
 |---|---|---|---|
 | umbrella | ERGlike umbrella | roguERGlike | this session log branch in flight |
 | `repos/sidecar/` | sidecar | roguERGlike-sidecar | `develop` clean; **all 5 sequence items merged** (#21, #22, #23, #24, #25, #26) |
-| `repos/engine/` | engine framework | roguERGlike-engine | `develop` clean; PR #13 (music intensity proposal, **awaiting Codex review of Blended section**); PR #4 (MVP loop) parked; `docs/concert-sidecar-planning` has unmerged terrain docs |
-| `repos/concert-mvp/` | **gizzERG** | paulyworld/gizzERG | `develop` clean; uncommitted Blended-terrain HANDOFF edit |
+| `repos/engine/` | engine framework | roguERGlike-engine | `develop` clean; PR #14 (vocabulary) merged today; PR #13 (music intensity proposal) open with Codex's uncommitted Blended section pending; PR #4 (MVP loop) parked; `docs/concert-sidecar-planning` has unmerged terrain docs |
+| `repos/concert-mvp/` | **gizzERG** | paulyworld/gizzERG | origin `develop` got drift-fix PR #2 today; local `develop` is 3 commits ahead (Codex's unpushed terrain tooling) — rebase needed on next push |
 | `repos/engine-mvp/` | engine MVP worktree | (worktree of engine) | tied to engine PR #4 |
 | `repos/game/` | game | roguERGlike-game | `develop`, no source yet |
 | `repos/server/` | server | *(none — deferred)* | placeholder |
 
 ## Entry point for next session
 
-> "Sidecar sequence complete (all 5 items in Codex's brief merged: hello, recording, annotations, structured pause, distance + FIT export, SIM mode). 169 sidecar tests, ruff + mypy clean. **First priority: Strava/TrainingPeaks FIT upload verification** (drag `roguerglike-export fit ...` output into both platforms; reportable acceptance criterion). Second: live-ride validation of pause/SIM against KICKR. Codex picks up gizzERG side — Terrain Mode UI, scrub editor, audio preprocessor, and a new Blended terrain model proposal (uncommitted notes in their HANDOFF + engine PR #13). Claude commentary on the Blended proposal is in the umbrella HANDOFF; the converge-on-one-vocabulary point is worth raising in the next sync."
+> "Sidecar sequence + vocabulary doc + drift-fix all landed. **First priority: Strava/TrainingPeaks FIT upload verification** (still pending; quick rep at top of HANDOFF). Second: live-ride validation of pause/SIM against KICKR. Canonical vocabulary now lives at `repos/engine/docs/vocabulary.md` — settles intensity scale (`[0, 2.0]` per Coggan zones), F2 tags, mode names, override events. Codex's lane: `set_terrain_profile` design, Blended Terrain Model implementation, scrub editor, audio preprocessing. gizzERG local develop is 3 commits ahead of origin (Codex's unpushed terrain tooling) — they'll need to rebase against PR #2's HANDOFF pointer addition when they next push."
