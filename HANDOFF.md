@@ -2,10 +2,28 @@
 
 > The current state of the project across all repos. Updated at the end of every session. Read this first.
 
-**Last updated:** 2026-05-25 (live-validation session)
-**Last session log:** `docs/sessions/2026-05-24-sidecar-sequence-complete.md`
-**Current branch:** umbrella `docs/2026-05-24-live-validations-closed`
-**Current focus:** Three big acceptance items closed against real hardware today. Live-ride smoke validated Pattern B structured pause + SIM mode end-to-end on the KICKR (textbook-perfect timeline, no anomalies). Strava manual upload confirmed working from sidecar-exported FIT. FIT exporter pre-emptively gained `elevation` handling so when gizzERG starts pushing synthetic elevation samples, they flow to Strava/TP without further sidecar work. Plus a new hands-free smoke runner (`run-smoke-pause-sim.ps1`) so future protocol regressions are scriptable.
+**Last updated:** 2026-06-06 (gizzERG full-concert curves + tuning controls)
+**Last session log:** `docs/sessions/2026-06-06-full-concert-curves-tuning-controls.md`
+**Current branch:** umbrella `docs/2026-06-06-full-concert-tuning-controls`
+**Current focus:** gizzERG (concert-mvp) — full-concert v0.3/v0.4 audio extraction is live (3974 points, 833→end, per-window BPM); manual seed v0.2 with 26 F2-derived anchors (Motor Spirit + Mind Fuzz medley) selectable; intensity-smoothing slider drives chart overlay + controller target + BPM line from one knob; Authored Cues overlay (`cues` toggle) for visual A/B against derived/blended; Curve dropdown selection persists across reloads. 65/65 tests pass on `feat/full-concert-curves-tuning-controls` (concert-mvp). Sidecar untouched this session. Previous focus (live-validation closures) carried below.
+
+## gizzERG 2026-06-06 wrap
+
+| Area | What landed on `feat/full-concert-curves-tuning-controls` |
+|---|---|
+| Full-concert v0.3/v0.4 | 3974 audio-derived points covering t=833→8779 at 2s sample step. Manual-seed splice removed for t≥833 (was only used outside the prior 20-min sample). Library ids renamed: `audio-v0.3-20m`/`audio-v0.4-subjective-20m` → `audio-v0.3`/`audio-v0.4-subjective`. |
+| Per-window BPM | `librosa.feature.tempo(..., aggregate=None)` in `build_profile.py`. Lands in `audio_features.bpm` unnormalized. Chart line + tooltip + guidance prefer per-window; fall back to per-section `cue.bpm` when curve has no audio data. Tooltip labels source explicitly. Range 68-172 BPM, median 112. |
+| Manual seed v0.2 | New `bnnIdWzGSYIManualSeedV02Curve` — 26 dense anchor points across t=1607-2036 derived from F2 annotations in `repos/sidecar/docs/recordings/semantic-test-02.jsonl`. Outside that window inherits v0.1. |
+| Default style segments | v0.4 `styleSegments` extended to The Balrog (0.40), Iron Lung (0.35, label `heavy`), Evil Death Roll (0.50, label `thrash`), Hog Calling Contest (0.40), alongside the existing Gila/Motor Spirit. Other 10 Night-2 songs still unsegmented (`style_prior = 0`). |
+| Tuning UI | Intensity smoothing slider (0-60s symmetric centered MA; drives chart derived overlay + controller target series + BPM line consistently). Authored Cues chart overlay (`cues` toggle, rose-magenta step line) so you can compare authored/derived/blended at a glance. Curve dropdown selection persists per-video via localStorage. Boot-order fix: restored choice now actually loads (was a dropdown-only restore before). |
+| F2 fix validation | Codex's note-attach fix on concert-mvp `develop` validated 2026-05-27 via 10-keypress smoke (`repos/sidecar/docs/recordings/f2-smoke-test.jsonl`). 27-event semantic session followed (`semantic-test-02.jsonl`) — produced the data for v0.2. |
+| gizzERG issue #4 | F2 overlay digit hotkey auto-submits before note can be typed. Filed at https://github.com/paulyworld/gizzERG/issues/4 with three suggested fixes. Documented in concert-mvp HANDOFF + commit referenced in repos/sidecar/HANDOFF earlier. |
+
+## Open gizzERG tuning threads
+
+1. **Per-song music-end vs authored cue boundary** (`task #7`). Bandcamp track durations don't precisely match where music ends within each song — banter/applause sits in the section tail and the per-section BPM bleeds into it. Three approaches captured: auto-detect from existing audio features (sustained loudness drop / onset_density floor), F2-driven manual song-end markers, or hybrid.
+2. **styleSegments coverage** for the other 10 Night-2 songs as F2 tuning reveals which sections want a genre prior.
+3. **Browser ES-module cache** keeps catching us after JS regenerations. Hard-refresh works; consider adding `?v=...` to `audio-derived-curves.js` import if regens become frequent.
 
 ## Live-validation status
 
@@ -113,4 +131,4 @@ Codex's pending engine doc edit (Piece 3b Blended Terrain Model in `music-intens
 
 ## Entry point for next session
 
-> "Three big acceptance items closed against real hardware today: Pattern B structured pause + SIM mode live-validated on KICKR via the new `run-smoke-pause-sim.ps1` hands-free smoke runner (textbook-perfect), Strava manual FIT upload confirmed. Sidecar at 170/170 tests; FIT exporter pre-emptively handles `elevation` for when gizzERG starts pushing synthetic terrain. Next: richer FIT test on a real ride (distance auto-flows; just record + export + upload), Codex's `set_terrain_profile` design when ready, and optional Strava auto-upload (~3-4 hours of OAuth work when convenient). Canonical vocabulary lives at `repos/engine/docs/vocabulary.md`. gizzERG local develop divergence still pending Codex's rebase."
+> "gizzERG: full-concert v0.3/v0.4 (3974 points, per-window BPM) + intensity smoothing slider + Authored Cues overlay + manual seed v0.2 (26 F2-derived anchors for Motor Spirit + Mind Fuzz) all on `feat/full-concert-curves-tuning-controls`; 65/65 tests; localStorage persists curve choice; default metal styleSegments added for The Balrog / Iron Lung / Evil Death Roll / Hog Calling Contest. Code committed but unpushed — review and merge/PR at convenience. Open gizzERG threads: task #7 (per-song music-end vs authored boundary — 3 approaches written up), styleSegments coverage for other 10 songs as F2 tuning continues, gizzERG issue #4 (F2 digit auto-submit UX). Sidecar untouched this session — prior state (170/170 tests, all 5 sequence items merged, FIT exporter handles elevation) still current. gizzERG local develop divergence from 2026-05-25 still pending Codex's rebase; this session's branch is off develop so should compose cleanly."
