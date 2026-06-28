@@ -2,9 +2,10 @@
 
 > The current state of the project across all repos. Updated at the end of every session. Read this first.
 
-**Last updated:** 2026-06-06 (gizzERG full-concert curves + tuning controls)
-**Last session log:** `docs/sessions/2026-06-06-full-concert-curves-tuning-controls.md`
+**Last updated:** 2026-06-27 (gizzERG develop reconciliation)
+**Last session log:** `docs/sessions/2026-06-27-concert-mvp-reconcile.md`
 **Current branch:** umbrella `docs/2026-06-06-full-concert-tuning-controls`
+**2026-06-27 Codex reconciliation note:** `repos/concert-mvp` local `develop` now matches `origin/develop` at `9e57784` (#7 music-end detection on top of #5 full-concert curves). The skipped local Codex commits are preserved on backup branch `codex-backup-develop-before-reconcile-20260627`; origin contains the newer superset. Current validation is 69/69 Node tests plus `node --check` for `src\app.js`, `src\erg-controller.js`, and `src\terrain-model.js`.
 **Current focus:** gizzERG (concert-mvp) — full-concert v0.3/v0.4 audio extraction is live (3974 points, 833→end, per-window BPM); manual seed v0.2 with 26 F2-derived anchors (Motor Spirit + Mind Fuzz medley) selectable; intensity-smoothing slider drives chart overlay + controller target + BPM line from one knob; Authored Cues overlay (`cues` toggle) for visual A/B against derived/blended; Curve dropdown selection persists across reloads. 65/65 tests pass on `feat/full-concert-curves-tuning-controls` (concert-mvp). Sidecar untouched this session. Previous focus (live-validation closures) carried below.
 
 ## gizzERG 2026-06-06 wrap
@@ -119,6 +120,8 @@ Codex's pending engine doc edit (Piece 3b Blended Terrain Model in `music-intens
 
 ## Repo state
 
+**2026-06-27 correction:** `repos/concert-mvp` local `develop` is clean and aligned with `origin/develop` at `9e57784`; the stale row below mentioning unpushed local divergence is superseded.
+
 | Path | Friendly name | GitHub repo | Branch / state |
 |---|---|---|---|
 | umbrella | ERGlike umbrella | roguERGlike | this session log branch in flight |
@@ -130,5 +133,7 @@ Codex's pending engine doc edit (Piece 3b Blended Terrain Model in `music-intens
 | `repos/server/` | server | *(none — deferred)* | placeholder |
 
 ## Entry point for next session
+
+> "gizzERG: `repos/concert-mvp` local `develop` is now clean and aligned with `origin/develop` at `9e57784` (#7 music-end detection). Start from there. Next useful Codex work: fix F2 annotation UX issue #4 or add annotation tooltip/offline export support, then continue styleSegments/F2 tuning for unsegmented songs. Sidecar and engine remain stable; no sidecar contract work is blocking gizzERG tuning."
 
 > "gizzERG: full-concert v0.3/v0.4 (3974 points, per-window BPM) + intensity smoothing slider + Authored Cues overlay + manual seed v0.2 (26 F2-derived anchors for Motor Spirit + Mind Fuzz) all on `feat/full-concert-curves-tuning-controls`; 65/65 tests; localStorage persists curve choice; default metal styleSegments added for The Balrog / Iron Lung / Evil Death Roll / Hog Calling Contest. Code committed but unpushed — review and merge/PR at convenience. Open gizzERG threads: task #7 (per-song music-end vs authored boundary — 3 approaches written up), styleSegments coverage for other 10 songs as F2 tuning continues, gizzERG issue #4 (F2 digit auto-submit UX). Sidecar untouched this session — prior state (170/170 tests, all 5 sequence items merged, FIT exporter handles elevation) still current. gizzERG local develop divergence from 2026-05-25 still pending Codex's rebase; this session's branch is off develop so should compose cleanly."
