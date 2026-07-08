@@ -2,11 +2,42 @@
 
 > The current state of the project across all repos. Updated at the end of every session. Read this first.
 
-**Last updated:** 2026-06-27 (gizzERG develop reconciliation)
-**Last session log:** `docs/sessions/2026-06-27-concert-mvp-reconcile.md`
+**Last updated:** 2026-07-08 (shutdown handoff — no code, docs reconcile only)
+**Last session log:** `docs/sessions/2026-07-08-shutdown-handoff.md`
 **Current branch:** umbrella `docs/2026-06-06-full-concert-tuning-controls`
-**2026-06-27 Codex reconciliation note:** `repos/concert-mvp` local `develop` now matches `origin/develop` at `9e57784` (#7 music-end detection on top of #5 full-concert curves). The skipped local Codex commits are preserved on backup branch `codex-backup-develop-before-reconcile-20260627`; origin contains the newer superset. Current validation is 69/69 Node tests plus `node --check` for `src\app.js`, `src\erg-controller.js`, and `src\terrain-model.js`.
-**Current focus:** gizzERG (concert-mvp) — full-concert v0.3/v0.4 audio extraction is live (3974 points, 833→end, per-window BPM); manual seed v0.2 with 26 F2-derived anchors (Motor Spirit + Mind Fuzz medley) selectable; intensity-smoothing slider drives chart overlay + controller target + BPM line from one knob; Authored Cues overlay (`cues` toggle) for visual A/B against derived/blended; Curve dropdown selection persists across reloads. 65/65 tests pass on `feat/full-concert-curves-tuning-controls` (concert-mvp). Sidecar untouched this session. Previous focus (live-validation closures) carried below.
+**Current focus:** Project is paused. Two active states to be aware of when resuming:
+1. **Merged (2026-06-28):** all annotation-side gizzERG PRs — `#8`, `#9`, `#10`, `#11`, `#13` — plus sidecar `#32`. gizzERG develop `8a07119` / sidecar develop `12648d7`. Issues `#4` and `#12` closed.
+2. **Uncommitted WIP (2026-07-01):** importer overlay + background training + trained-curve auto-load, spanning both concert-mvp and sidecar working trees. **Not live-validated end-to-end.**
+
+The 2026-07-08 session log is the cold-start resume guide. Read it first, then the 2026-07-01 log for the WIP details, then the 2026-06-28 log for the annotation-merge context.
+
+## 2026-06-28 — gizzERG annotation PR triage + shift-drag range flow (merged)
+
+**One-line:** Four annotation PRs shipped to gizzERG `develop` (`#8` docs, `#11` range annotations, `#9` F2 preset auto-submit fix, `#10` annotation tooltip). Sidecar `#32` shipped alongside for the annotation context docs. Then fixed a rider-reported bug on `#11`'s range checkbox by replacing it with a Shift+drag flow (`#13`, closes issue `#12`). gizzERG issue `#4` also closed as resolved by `#9`.
+
+**Wire-format touch:** none. `#32` is docs-only for existing pass-through context fields.
+
+**Validation on merge:** gizzERG `78/78` tests; sidecar unchanged (docs-only PR).
+
+**Details:** `docs/sessions/2026-06-28-annotation-merges-and-range-drag.md`.
+
+## 2026-07-01 — gizzERG importer overlay + background training (WIP, uncommitted, both repos)
+
+**One-line:** The video importer is now a top-row overlay, sidecar actions have a real CLI + web readout, `create_training_run` actually runs the builder in the background and streams progress, and a completed run's curve auto-loads into the Curve dropdown.
+
+**Why:** The importer button couldn't expand in the crowded sidebar (`.control-panel` grid is `overflow: hidden`), and "Queue training" produced no readout anywhere because `create_training_run` was queue-only — it wrote `input.json` and never executed the builder (`run_training_command` was dead code).
+
+| Area | What landed (uncommitted) |
+|---|---|
+| **Importer overlay** (concert-mvp) | `Import…` trigger by the Video select opens `#videoImporterOverlay` modal (Esc/backdrop/✕). Actions grouped **In browser** (`Parse setlist`, primary `▶ Load into player`, `Copy train command`) vs **Sidecar · needs connection**; per-button `title` tooltips; step hint; labeled result box. |
+| **Sidecar-action readout** (concert-mvp) | Color-coded `#importerStatus` banner (idle/running-pulse/ok/error); milestones mirror to the event log (`log(text, level)`); `training_run_progress` updates banner+preview only; outbound `sendSidecarCommand` ack. |
+| **Background training** (sidecar) | New `training_runner.py` `execute_training_run()` spawns the builder child process, streams `tqdm`/stdout (splits on `\r`) to the CLI log + new `training_run_started`/`progress`/`completed`/`failed` events; `input.json` status queued→running→completed/failed; `ws_server` runs it as a tracked background task; all profile-store commands now `log.info` on success. |
+| **`--profile-builder` flag** (sidecar) | New CLI option (precedence over `GIZZERG_PROFILE_BUILDER` env). Required for training to run; builder needs yt-dlp + librosa + ffmpeg. Without it, runs fail *visibly* (red banner + CLI error). |
+| **Auto-load trained curve** (concert-mvp) | `registerTrainedCurve()` on `training_run_completed` matches `profile_id`→loaded profile (raw + `safeProfileId` compare), appends the curve to `available_intensity_curves` as "Trained · &lt;model_version&gt;", and selects+activates it when that profile is on screen. |
+
+**Validation:** sidecar **186 tests pass, `ruff check .` clean**; concert-mvp **84/84 tests**, `node --check src/app.js` clean, cache-bust `?v=profile-store-3`. **Not yet live-validated end-to-end** (needs a running sidecar with `--profile-builder` + a real YouTube download).
+
+**Next:** live-validate the loop, then branch each repo's uncommitted work off `develop` and open PRs. First thing to watch on a real run: the completed event's `profile_id` matching the loaded profile's `video_id`.
 
 ## gizzERG 2026-06-06 wrap
 
@@ -120,20 +151,18 @@ Codex's pending engine doc edit (Piece 3b Blended Terrain Model in `music-intens
 
 ## Repo state
 
-**2026-06-27 correction:** `repos/concert-mvp` local `develop` is clean and aligned with `origin/develop` at `9e57784`; the stale row below mentioning unpushed local divergence is superseded.
+**2026-07-08 snapshot:**
 
 | Path | Friendly name | GitHub repo | Branch / state |
 |---|---|---|---|
-| umbrella | ERGlike umbrella | roguERGlike | this session log branch in flight |
-| `repos/sidecar/` | sidecar | roguERGlike-sidecar | `develop` clean; **all 5 sequence items merged** (#21, #22, #23, #24, #25, #26) |
-| `repos/engine/` | engine framework | roguERGlike-engine | `develop` clean; PR #14 (vocabulary) merged today; PR #13 (music intensity proposal) open with Codex's uncommitted Blended section pending; PR #4 (MVP loop) parked; `docs/concert-sidecar-planning` has unmerged terrain docs |
-| `repos/concert-mvp/` | **gizzERG** | paulyworld/gizzERG | origin `develop` got drift-fix PR #2 today; local `develop` is 3 commits ahead (Codex's unpushed terrain tooling) — rebase needed on next push |
+| umbrella | ERGlike umbrella | roguERGlike | `docs/2026-06-06-full-concert-tuning-controls` in flight (session-log branch) |
+| `repos/sidecar/` | sidecar | roguERGlike-sidecar | `develop` at `12648d7` (PR #32 annotation-range docs); **uncommitted WIP** for profile-store + background training (see 2026-07-01 section) |
+| `repos/engine/` | engine framework | roguERGlike-engine | `develop` at `f064798`; PR #14 (vocabulary) merged; PR #13 (music intensity proposal) open with Codex's uncommitted Blended section pending; PR #4 (MVP loop) parked; `docs/concert-sidecar-planning` has unmerged terrain docs |
+| `repos/concert-mvp/` | **gizzERG** | paulyworld/gizzERG | `develop` at `8a07119` (PRs #8, #11, #9, #10, #13 all merged 2026-06-28); **uncommitted WIP** for importer overlay + trained-curve auto-load (see 2026-07-01 section); zero open PRs, zero open issues |
 | `repos/engine-mvp/` | engine MVP worktree | (worktree of engine) | tied to engine PR #4 |
 | `repos/game/` | game | roguERGlike-game | `develop`, no source yet |
 | `repos/server/` | server | *(none — deferred)* | placeholder |
 
 ## Entry point for next session
 
-> "gizzERG: `repos/concert-mvp` local `develop` is now clean and aligned with `origin/develop` at `9e57784` (#7 music-end detection). Start from there. Next useful Codex work: fix F2 annotation UX issue #4 or add annotation tooltip/offline export support, then continue styleSegments/F2 tuning for unsegmented songs. Sidecar and engine remain stable; no sidecar contract work is blocking gizzERG tuning."
-
-> "gizzERG: full-concert v0.3/v0.4 (3974 points, per-window BPM) + intensity smoothing slider + Authored Cues overlay + manual seed v0.2 (26 F2-derived anchors for Motor Spirit + Mind Fuzz) all on `feat/full-concert-curves-tuning-controls`; 65/65 tests; localStorage persists curve choice; default metal styleSegments added for The Balrog / Iron Lung / Evil Death Roll / Hog Calling Contest. Code committed but unpushed — review and merge/PR at convenience. Open gizzERG threads: task #7 (per-song music-end vs authored boundary — 3 approaches written up), styleSegments coverage for other 10 songs as F2 tuning continues, gizzERG issue #4 (F2 digit auto-submit UX). Sidecar untouched this session — prior state (170/170 tests, all 5 sequence items merged, FIT exporter handles elevation) still current. gizzERG local develop divergence from 2026-05-25 still pending Codex's rebase; this session's branch is off develop so should compose cleanly."
+> "Project paused 2026-07-08. gizzERG `develop` at `8a07119` and sidecar `develop` at `12648d7` are stable — all annotation-side work landed 2026-06-28 (`#8`/`#9`/`#10`/`#11`/`#13`, plus sidecar `#32`), issues `#4` and `#12` closed. **Uncommitted WIP on both concert-mvp and sidecar** from the 2026-07-01 importer + background-training session; the code still exists in the working trees but has never been live-validated end-to-end. Read `docs/sessions/2026-07-08-shutdown-handoff.md` for the cold-start resume checklist (baseline tests → live-validate importer/training loop → branch WIP off develop → PR). Then read `2026-07-01-importer-overlay-background-training.md` for the WIP context and `2026-06-28-annotation-merges-and-range-drag.md` for the merge context. No open PRs; no open gizzERG issues."
